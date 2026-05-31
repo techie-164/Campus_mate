@@ -2,6 +2,7 @@ import React from 'react'
 import backgroundImage from './assets/bg.png'
 import Sidebar from './components/Sidebar'
 import { useState } from 'react'
+import './App.css'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -22,9 +23,15 @@ function App() {
           fontSize: '3rem',
           fontWeight: 'bold',
         }}>Campus Mate</h1>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}> 🗲
-        </button>
-        <Sidebar isOpen={isSidebarOpen} />
+        {!isSidebarOpen && (
+          <button
+            className="toggle"
+            style={{ left: '20px' }}
+            onClick={() => setIsSidebarOpen(true)}>
+            ⚡
+          </button>
+        )}
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>
   )
 }
