@@ -3,6 +3,7 @@ import backgroundImage from './assets/bg.png'
 import Sidebar from './components/Sidebar'
 import { useState } from 'react'
 import './App.css'
+import Topbar from './Topbar.jsx'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -17,12 +18,7 @@ function App() {
         minHeight: '100vh',
         color: 'white',
       }}>
-        <h1 style={{
-          justifyContent: 'center',
-          display: 'flex',
-          fontSize: '3rem',
-          fontWeight: 'bold',
-        }}>Campus Mate</h1>
+        <Topbar />
         {!isSidebarOpen && (
           <button
             className="toggle"
