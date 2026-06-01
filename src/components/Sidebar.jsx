@@ -1,6 +1,9 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function Sidebar({isOpen, onClose}){
+    const navigate = useNavigate()
+
     return (
         <aside className={"sidebar" + (isOpen ? " open" : "") }>
             <div className="sidebar-header">
@@ -25,7 +28,7 @@ function Sidebar({isOpen, onClose}){
                 <span className="sidebar-item-icon">🤝</span>
                 Projects & Collaborations
             </button>
-            <button className="sidebar-item">
+            <button className="sidebar-item" onClick={() => navigate('/scribble')}>
                 <span className="sidebar-item-icon">📝</span>
                 Scribble Pad
             </button>
