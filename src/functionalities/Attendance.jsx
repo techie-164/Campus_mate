@@ -202,7 +202,9 @@ function CalendarView({ subject, viewMonth, setViewMonth, onMark }){
 
   function handleDayClick(d){
     const dateStr = formatDate(d)
-    if (d < startDate || d > today) return
+    const todayStr = formatDate(today)
+    const startDateStr = formatDate(startDate)
+    if (dateStr < startDateStr || dateStr > todayStr) return
     const choice = window.prompt('Mark attendance: p=Present, a=Absent, c=Cancel','p')
     if (!choice) return
     const key = choice.toLowerCase()
@@ -226,7 +228,9 @@ function CalendarView({ subject, viewMonth, setViewMonth, onMark }){
         {cells.map((cell, idx) => {
           if (!cell) return <div key={idx} className="cal-cell empty" />
           const dateStr = formatDate(cell)
-          const disabled = (cell < startDate) || (cell > today)
+          const todayStr = formatDate(today)
+          const startDateStr = formatDate(startDate)
+          const disabled = dateStr < startDateStr || dateStr > todayStr
           const val = (subject.records && subject.records[dateStr]) || null
           const cls = `cal-cell ${disabled ? 'disabled' : ''} ${val === 'present' ? 'present' : ''} ${val === 'absent' ? 'absent' : ''}`
           return (
