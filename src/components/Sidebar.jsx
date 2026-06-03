@@ -32,6 +32,10 @@ function Sidebar({isOpen, onClose}){
                 <span className="sidebar-item-icon">📝</span>
                 Scribble Pad
             </button>
+            <button className="sidebar-item" onClick={() => navigate('/attendance')}>
+                <span className="sidebar-item-icon">📋</span>
+                Attendance
+            </button>
         </aside>
     )
 }

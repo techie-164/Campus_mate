@@ -44,6 +44,26 @@ function Scribble(){
         setfiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f))
     }
 
+    function openFileForAnnotate(item) {
+        if (!item?.file) return
+        if (!item.file.type.includes('pdf') && !item.name.toLowerCase().endsWith('.pdf')) {
+            alert('Only PDF files can be opened in the annotation view.')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onload = () => {
+            localStorage.setItem('campus_mate_pdf_to_annotate', reader.result)
+            localStorage.setItem('campus_mate_pdf_name', item.name)
+            const w = window.open('/annotate', '_blank')
+            if (!w) {
+                // popup blocked — don't navigate away from this tab (that would lose in-memory files)
+                alert('Popup blocked. Please allow popups for this site so the annotator opens in a new tab, then try Annotate again.')
+            }
+        }
+        reader.readAsDataURL(item.file)
+    }
+
     return (
         <div
             className="scribble"
@@ -67,7 +87,7 @@ function Scribble(){
                 <div className="center-area">
                     <div className="center-block">
                         <div className="list-wrapper">
-                            <List items={files} onRemove={removeFile} onRename={renameFile} />
+                            <List items={files} onRemove={removeFile} onRename={renameFile} onOpen={openFileForAnnotate} />
                         </div>
 
                         <div className="upload-col">
