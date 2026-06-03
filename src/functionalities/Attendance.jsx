@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import backgroundImage from '../assets/bg.png'
+import Topbar from '../Topbar'
 import './Attendance.css'
+
+const STORAGE_SUBJECTS = 'campus_mate_attendance'
+const STORAGE_SELECTED = 'campus_mate_attendance_selected'
+const STORAGE_VIEW_MONTH = 'campus_mate_attendance_month'
 
 function uid() { return Date.now() + Math.random() }
 
@@ -27,7 +32,7 @@ function Attendance(){
   })
 
   useEffect(() => {
-    const raw = localStorage.getItem('campus_mate_attendance')
+    const raw = localStorage.getItem(STORAGE_SUBJECTS)
     if (raw) {
       try {
         setSubjects(JSON.parse(raw))
@@ -35,11 +40,37 @@ function Attendance(){
         console.error(e)
       }
     }
+
+    const savedId = localStorage.getItem(STORAGE_SELECTED)
+    if (savedId) {
+      setSelectedId(savedId)
+    }
+
+    const savedMonth = localStorage.getItem(STORAGE_VIEW_MONTH)
+    if (savedMonth) {
+      try {
+        setViewMonth(JSON.parse(savedMonth))
+      } catch (e) {
+        console.error(e)
+      }
+    }
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('campus_mate_attendance', JSON.stringify(subjects))
-  }, [subjects])
+    localStorage.setItem(STORAGE_SUBJECTS, JSON.stringify(subjects))
+    if (selectedId && !subjects.some(s => s.id === selectedId)) {
+      setSelectedId(null)
+    }
+  }, [subjects, selectedId])
+
+  useEffect(() => {
+    if (selectedId) localStorage.setItem(STORAGE_SELECTED, selectedId)
+    else localStorage.removeItem(STORAGE_SELECTED)
+  }, [selectedId])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_VIEW_MONTH, JSON.stringify(viewMonth))
+  }, [viewMonth])
 
   function addSubject(){
     const name = window.prompt('Enter subject name')
@@ -89,6 +120,7 @@ function Attendance(){
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
     }}>
+      <Topbar />
       <div className="attendance-shell">
         <div className="attendance-list">
           <div className="attendance-list-header">

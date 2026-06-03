@@ -21,10 +21,6 @@ function Sidebar({isOpen, onClose}){
                 Events & Tasks
             </button>
             <button className="sidebar-item">
-                <span className="sidebar-item-icon">👥</span>
-                Attendance
-            </button>
-            <button className="sidebar-item">
                 <span className="sidebar-item-icon">🤝</span>
                 Projects & Collaborations
             </button>

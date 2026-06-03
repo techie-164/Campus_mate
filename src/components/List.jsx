@@ -8,7 +8,8 @@ function List({ items = [], onRemove, onRename, onOpen }){
             )}
 
             {items.map((item, index) => {
-                const canAnnotate = item.file?.type === 'application/pdf' || item.name.toLowerCase().endsWith('.pdf')
+                const type = item.type || item.file?.type
+                const canAnnotate = type?.includes('pdf') || item.name.toLowerCase().endsWith('.pdf')
 
                 return (
                     <div className="list-item" key={item.id || index}>

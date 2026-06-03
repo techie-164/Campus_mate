@@ -1,39 +1,68 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './Scribble.css';
 import backgroundImage from '../assets/bg.png';
 import Topbar from '../Topbar';
 import Sidebar from '../components/Sidebar';
 import List from '../components/List';
 
+const STORAGE_KEY = 'campus_mate_scribble_files'
+
 function Scribble(){
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [files, setfiles] = useState([])
+    const [files, setFiles] = useState([])
     const fileInputRef = useRef(null)
+
+    useEffect(() => {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (!stored) return
+        try {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed)) setFiles(parsed)
+        } catch (err) {
+            console.error('Failed to parse stored scribble files', err)
+        }
+    }, [])
+
+    function saveFiles(nextFiles) {
+        const resolver = typeof nextFiles === 'function' ? nextFiles : () => nextFiles
+        setFiles(prev => {
+            const resolved = resolver(prev)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(resolved))
+            return resolved
+        })
+    }
 
     function handleUploadClick(){
         fileInputRef.current && fileInputRef.current.click()
     }
 
-    function handleFilesSelected(e){
+    async function handleFilesSelected(e){
         const selected = Array.from(e.target.files || [])
         if(selected.length === 0) return
 
-        const newItems = selected.map((f, idx) => {
-            const name = window.prompt('Enter name for file', f.name) || f.name
-            return {
-                id: Date.now() + Math.random() + idx,
-                name,
-                file: f,
-            }
-        })
+        const newItems = await Promise.all(selected.map((f, idx) => {
+            return new Promise((resolve) => {
+                const name = window.prompt('Enter name for file', f.name) || f.name
+                const reader = new FileReader()
+                reader.onload = () => {
+                    resolve({
+                        id: Date.now() + Math.random() + idx,
+                        name,
+                        type: f.type,
+                        size: f.size,
+                        dataUrl: reader.result,
+                    })
+                }
+                reader.readAsDataURL(f)
+            })
+        }))
 
-        setfiles(prev => [...prev, ...newItems])
-        // clear input so same file can be uploaded again if needed
+        saveFiles(prev => [...prev, ...newItems])
         e.target.value = null
     }
 
     function removeFile(id){
-        setfiles(prev => prev.filter(f => f.id !== id))
+        saveFiles(prev => prev.filter(f => f.id !== id))
     }
 
     function renameFile(id){
@@ -41,26 +70,37 @@ function Scribble(){
         if(!item) return
         const newName = window.prompt('Rename file', item.name)
         if(!newName) return
-        setfiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f))
+        saveFiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f))
     }
 
     function openFileForAnnotate(item) {
-        if (!item?.file) return
-        if (!item.file.type.includes('pdf') && !item.name.toLowerCase().endsWith('.pdf')) {
+        const canAnnotate = item.type?.includes('pdf') || item.name.toLowerCase().endsWith('.pdf')
+        if (!canAnnotate) {
             alert('Only PDF files can be opened in the annotation view.')
             return
         }
 
-        const reader = new FileReader()
-        reader.onload = () => {
-            localStorage.setItem('campus_mate_pdf_to_annotate', reader.result)
+        const openAnnotator = (dataUrl) => {
+            localStorage.setItem('campus_mate_pdf_to_annotate', dataUrl)
             localStorage.setItem('campus_mate_pdf_name', item.name)
             const w = window.open('/annotate', '_blank')
             if (!w) {
-                // popup blocked — don't navigate away from this tab (that would lose in-memory files)
                 alert('Popup blocked. Please allow popups for this site so the annotator opens in a new tab, then try Annotate again.')
             }
         }
+
+        if (item.dataUrl) {
+            openAnnotator(item.dataUrl)
+            return
+        }
+
+        if (!item.file) {
+            alert('File data is unavailable. Please re-upload the file.')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onload = () => openAnnotator(reader.result)
         reader.readAsDataURL(item.file)
     }
 
