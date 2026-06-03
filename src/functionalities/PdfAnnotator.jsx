@@ -1,8 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { PDFDocument } from 'pdf-lib'
+import backgroundImage from '../assets/bg.png'
+import Topbar from '../Topbar'
+import Sidebar from '../components/Sidebar'
+import '../App.css'
 import './PdfAnnotator.css'
 
 function PdfAnnotator() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [pdfDataUrl, setPdfDataUrl] = useState('')
   const [fileName, setFileName] = useState('annotated.pdf')
   const [error, setError] = useState('')
@@ -188,7 +193,24 @@ function PdfAnnotator() {
   }
 
   return (
-    <div className="pdf-annotator">
+    <div className="pdf-annotator" style={{
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      minHeight: '100vh',
+      color: 'white',
+    }}>
+      {!isSidebarOpen && (
+        <button
+          className="toggle"
+          style={{ left: '20px' }}
+          onClick={() => setIsSidebarOpen(true)}>
+          ⚡
+        </button>
+      )}
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Topbar />
       <div className="annotator-shell">
         <div className="annotator-header">
           <div>

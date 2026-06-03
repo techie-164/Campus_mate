@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import backgroundImage from '../assets/bg.png'
 import Topbar from '../Topbar'
+import Sidebar from '../components/Sidebar'
+import '../App.css'
 import './Attendance.css'
 
 const STORAGE_SUBJECTS = 'campus_mate_attendance'
@@ -24,6 +26,7 @@ function daysBetween(a, b) {
 }
 
 function Attendance(){
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [subjects, setSubjects] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [viewMonth, setViewMonth] = useState(() => {
@@ -119,7 +122,18 @@ function Attendance(){
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      minHeight: '100vh',
+      color: 'white',
     }}>
+      {!isSidebarOpen && (
+        <button
+          className="toggle"
+          style={{ left: '20px' }}
+          onClick={() => setIsSidebarOpen(true)}>
+          ⚡
+        </button>
+      )}
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <Topbar />
       <div className="attendance-shell">
         <div className="attendance-list">

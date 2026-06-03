@@ -1,5 +1,7 @@
 .pdf-annotator {
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   padding: 32px;
   background: linear-gradient(180deg, rgba(7, 11, 26, 0.95), rgba(23, 36, 74, 0.95));
   color: #f4f7ff;
@@ -8,6 +10,9 @@
 .annotator-shell {
   max-width: 1100px;
   margin: 0 auto;
+  height: calc(100vh - 100px);
+  overflow: auto;
+  padding-bottom: 20px;
 }
 
 .annotator-header {

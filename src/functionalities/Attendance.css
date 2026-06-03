@@ -1,9 +1,9 @@
-.attendance { min-height: 100vh; padding: 120px 20px 20px; color: #fff; }
-.attendance-shell { display: flex; gap: 20px; max-width: 1100px; margin: 0 auto; background: rgba(6, 10, 25, 0.82); border-radius: 18px; padding: 20px; backdrop-filter: blur(16px); }
+.attendance { min-height: 100vh; height: 100vh; overflow: hidden; padding: 120px 20px 20px; color: #fff; }
+.attendance-shell { display: flex; gap: 20px; max-width: 1100px; margin: 0 auto; background: rgba(6, 10, 25, 0.82); border-radius: 18px; padding: 20px; backdrop-filter: blur(16px); height: calc(100vh - 140px); overflow: hidden; }
 
-.attendance-list { width: 320px; background: rgba(255,255,255,0.08); border-radius: 18px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+.attendance-list { width: 320px; background: rgba(255,255,255,0.08); border-radius: 18px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
 .attendance-list-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
-.subjects { display:flex; flex-direction:column; gap:8px; }
+.subjects { display:flex; flex-direction:column; gap:8px; overflow: auto; flex: 1; min-height: 0; }
 .subject-row { display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:8px; }
 .subject-row.active { background: rgba(116,214,255,0.06); }
 .subject-main { cursor:pointer; display:flex; flex-direction:column; }

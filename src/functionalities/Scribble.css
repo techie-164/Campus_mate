@@ -47,6 +47,8 @@
 
 .list {
   width: 420px;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
   background: rgba(255,255,255,0.04);
   border-radius: 12px;
   padding: 12px;

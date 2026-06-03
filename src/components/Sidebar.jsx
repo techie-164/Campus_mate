@@ -16,7 +16,7 @@ function Sidebar({isOpen, onClose}){
             </div>
         </div>
 
-            <button className="sidebar-item">
+            <button className="sidebar-item" onClick={() => navigate('/tasks')}>
                 <span className="sidebar-item-icon">📅</span>
                 Events & Tasks
             </button>
