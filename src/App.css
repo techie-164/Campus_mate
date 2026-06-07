@@ -233,6 +233,20 @@ body{
     z-index: 900;
 }
 
+.ghost-button {
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    color: #ffdcec;
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ghost-button:hover {
+    background: rgba(255,255,255,0.08);
+}
+
 .logo {
     position: absolute;
     left: 50%;

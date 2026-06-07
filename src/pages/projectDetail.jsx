@@ -8,8 +8,10 @@ function ProjectDetail(){
   const [materials, setMaterials] = useState([])
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
   const [messages, setMessages] = useState([])
   const [msg, setMsg] = useState('')
+  const [fileNote, setFileNote] = useState('')
   const listRef = useRef(null)
 
   useEffect(()=>{
@@ -27,11 +29,52 @@ function ProjectDetail(){
     localStorage.setItem(`chat_${id}`, JSON.stringify(messages))
   },[messages,id])
 
-  const addMaterial = ()=>{
-    if(!title.trim()) return
-    const item = { id: Date.now(), title, desc }
+  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+
+  const addMaterial = async () =>{
+    if(!title.trim() && !selectedFile) return
+
+    const materialTitle = title.trim() || (selectedFile ? selectedFile.name : '')
+    let fileData = null
+    let fileName = null
+    let fileType = null
+    let fileSize = null
+
+    if (selectedFile) {
+      fileName = selectedFile.name
+      fileType = selectedFile.type
+      fileSize = selectedFile.size
+
+      if (selectedFile.size <= 500000) {
+        fileData = await readFileAsDataUrl(selectedFile)
+      }
+    }
+
+    const item = {
+      id: Date.now(),
+      title: materialTitle,
+      desc,
+      fileName,
+      fileType,
+      fileSize,
+      fileData
+    }
+
     setMaterials(prev=>[item, ...prev])
-    setTitle(''); setDesc('')
+    setTitle('')
+    setDesc('')
+    setSelectedFile(null)
+    setFileNote('')
+  }
+
+  const deleteMaterial = (materialId) => {
+    if (!confirm('Remove this material?')) return
+    setMaterials(prev => prev.filter(m => m.id !== materialId))
   }
 
   const sendMessage = ()=>{
@@ -57,8 +100,21 @@ function ProjectDetail(){
               {materials.length === 0 && <div className="empty-state">No materials yet. Add project files, links or notes to get started.</div>}
               {materials.map(m=> (
                 <article key={m.id} className="material-item">
-                  <strong>{m.title}</strong>
-                  <p>{m.desc || 'No description provided.'}</p>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:12}}>
+                    <strong>{m.title}</strong>
+                    <button className="ghost-button" onClick={() => deleteMaterial(m.id)}>Remove</button>
+                  </div>
+                  <p>{m.desc || (m.fileName ? `Attached file: ${m.fileName}` : 'No description provided.')}</p>
+                  {m.fileName && (
+                    <p style={{ margin: '10px 0 0', fontSize: '0.92rem', color: '#b9c4ff' }}>
+                      File: {m.fileName} · {(m.fileSize / 1024).toFixed(1)} KB
+                      {m.fileData ? (
+                        <><br /><a href={m.fileData} download={m.fileName} style={{ color: '#9ddcff' }}>Download</a></>
+                      ) : (
+                        <span style={{ opacity: 0.8 }}><br />Preview unavailable for large file.</span>
+                      )}
+                    </p>
+                  )}
                 </article>
               ))}
             </div>
@@ -66,6 +122,23 @@ function ProjectDetail(){
             <div className="material-form">
               <input className="app-input" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} />
               <input className="app-input" placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)} />
+              <label style={{ display: 'grid', gap: 8 }}>
+                <span style={{ color: '#c8d2ff', fontSize: '0.94rem' }}>Attach file</span>
+                <input
+                  type="file"
+                  className="app-input"
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    setSelectedFile(file || null)
+                    if (file) {
+                      setFileNote(`${file.name} selected`)
+                    } else {
+                      setFileNote('')
+                    }
+                  }}
+                />
+              </label>
+              {fileNote && <div style={{ color: '#c8d2ff', fontSize: '0.95rem' }}>{fileNote}</div>}
               <button className="app-button" onClick={addMaterial}>Add Material</button>
             </div>
           </section>

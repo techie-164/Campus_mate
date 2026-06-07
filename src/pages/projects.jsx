@@ -24,7 +24,14 @@ function Projects(){
     const p = { id, title: newTitle }
     setProjects(prev => [p, ...prev])
     setNewTitle('')
-    navigate(`/projects/${id}`)
+  }
+
+  const deleteProject = (projectId) => {
+    if(!confirm('Delete project and its local data?')) return
+    setProjects(prev => prev.filter(p => p.id !== projectId))
+    // cleanup per-project localStorage entries
+    try { localStorage.removeItem(`materials_${projectId}`) } catch(e){}
+    try { localStorage.removeItem(`chat_${projectId}`) } catch(e){}
   }
 
   const requestJoin = () =>{
@@ -69,9 +76,14 @@ function Projects(){
           <div className="project-card-list">
             {projects.length===0 && <div className="empty-state">No projects yet. Create one to get started and it will appear here.</div>}
             {projects.map(p=> (
-              <div key={p.id} onClick={()=>navigate(`/projects/${p.id}`)} className="project-card">
-                <h4 className="project-card-title">{p.title}</h4>
-                <p className="project-card-subtitle">Project ID: {p.id}</p>
+              <div key={p.id} className="project-card">
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
+                  <div style={{cursor:'pointer'}} onClick={()=>navigate(`/projects/${p.id}`)}>
+                    <h4 className="project-card-title">{p.title}</h4>
+                    <p className="project-card-subtitle">Project ID: {p.id}</p>
+                  </div>
+                  <button className="ghost-button" onClick={() => deleteProject(p.id)}>Delete</button>
+                </div>
               </div>
             ))}
           </div>
