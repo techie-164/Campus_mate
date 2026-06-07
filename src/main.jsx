@@ -4,6 +4,8 @@ import { RouterProvider, createBrowserRouter, Route, createRoutesFromElements } 
 import Login from './pages/login.jsx'
 import Signup from './pages/signup.jsx'
 import App from './App.jsx'
+import Projects from './pages/projects.jsx'
+import ProjectDetail from './pages/projectDetail.jsx'
 import './index.css'
 import './App.css'
 import Scribble from './functionalities/Scribble.jsx'
@@ -17,6 +19,8 @@ const router = createBrowserRouter(
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/home" element={<App />} />
+      <Route path="/projects" element={<Projects />} />
+      <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/tasks" element={<Tasks />} />
       <Route path="/scribble" element={<Scribble />} />
       <Route path="/annotate" element={<PdfAnnotator />} />

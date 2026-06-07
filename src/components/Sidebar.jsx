@@ -20,7 +20,7 @@ function Sidebar({isOpen, onClose}){
                 <span className="sidebar-item-icon">📅</span>
                 Events & Tasks
             </button>
-            <button className="sidebar-item">
+            <button className="sidebar-item" onClick={() => { navigate('/projects'); onClose(); }}>
                 <span className="sidebar-item-icon">🤝</span>
                 Projects & Collaborations
             </button>
