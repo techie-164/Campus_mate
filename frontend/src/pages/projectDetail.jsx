@@ -1,16 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import backgroundImage from '../assets/bg.png'
 import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
+import { addProjectMaterial, deleteProjectMaterial, getProject, SOCKET_SERVER_URL } from '../lib/api'
 import '../App.css'
 import './projectDetail.css'
 
 function ProjectDetail(){
   const { id } = useParams()
+  const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [project, setProject] = useState(null)
   const [materials, setMaterials] = useState([])
+  const [onlineUsers, setOnlineUsers] = useState([])
+  const [loadError, setLoadError] = useState('')
+  const [socketStatus, setSocketStatus] = useState('Connecting')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
@@ -21,14 +27,33 @@ function ProjectDetail(){
     const stored = localStorage.getItem('username')
     return stored || `User${Math.floor(Math.random() * 1000)}`
   })
-  const [socket, setSocket] = useState(null)
+  const socketRef = useRef(null)
   const listRef = useRef(null)
   const chatListRef = useRef(null)
 
+  useEffect(() => {
+    let ignore = false
+
+    getProject(id)
+      .then(data => {
+        if (!ignore) {
+          setProject(data)
+          setMaterials(data.materials || [])
+          setLoadError('')
+        }
+      })
+      .catch(err => {
+        if (!ignore) setLoadError(err.message)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [id])
+
   // Initialize Socket.io connection
   useEffect(() => {
-    const SOCKET_SERVER = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000'
-    const newSocket = io(SOCKET_SERVER, {
+    const newSocket = io(SOCKET_SERVER_URL, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -36,9 +61,18 @@ function ProjectDetail(){
     })
 
     newSocket.on('connect', () => {
+      setSocketStatus('Live')
       console.log('Connected to socket server')
       newSocket.emit('join-project', id, username)
       newSocket.emit('get-chat-history', id)
+    })
+
+    newSocket.on('disconnect', () => {
+      setSocketStatus('Offline')
+    })
+
+    newSocket.on('connect_error', () => {
+      setSocketStatus('Offline')
     })
 
     newSocket.on('chat-history', (history) => {
@@ -79,27 +113,39 @@ function ProjectDetail(){
       }])
     })
 
+    newSocket.on('project-users', users => {
+      setOnlineUsers(users)
+    })
+
+    newSocket.on('material-added', ({ material }) => {
+      setMaterials(prev => prev.some(item => item.id === material.id) ? prev : [material, ...prev])
+    })
+
+    newSocket.on('material-deleted', ({ materialId }) => {
+      setMaterials(prev => prev.filter(material => material.id !== materialId))
+    })
+
+    newSocket.on('project-deleted', ({ id: deletedProjectId }) => {
+      if (deletedProjectId === id) {
+        alert('This project was deleted.')
+        navigate('/projects')
+      }
+    })
+
     newSocket.on('error', (error) => {
       console.error('Socket error:', error)
     })
 
-    setSocket(newSocket)
-
-    // Load materials from localStorage
-    const m = JSON.parse(localStorage.getItem(`materials_${id}`) || '[]')
-    setMaterials(m)
+    socketRef.current = newSocket
 
     return () => {
       if (newSocket) {
         newSocket.emit('leave-project', id)
         newSocket.disconnect()
       }
+      socketRef.current = null
     }
-  }, [id, username])
-
-  useEffect(() => {
-    localStorage.setItem(`materials_${id}`, JSON.stringify(materials))
-  }, [materials, id])
+  }, [id, navigate, username])
 
   useEffect(() => {
     localStorage.setItem('username', username)
@@ -132,31 +178,43 @@ function ProjectDetail(){
     }
 
     const item = {
-      id: Date.now(),
       title: materialTitle,
       desc,
       fileName,
       fileType,
       fileSize,
-      fileData
+      fileData,
+      createdBy: username
     }
 
-    setMaterials(prev => [item, ...prev])
-    setTitle('')
-    setDesc('')
-    setSelectedFile(null)
-    setFileNote('')
+    try {
+      const material = await addProjectMaterial(id, item)
+      setMaterials(prev => prev.some(existing => existing.id === material.id) ? prev : [material, ...prev])
+      setTitle('')
+      setDesc('')
+      setSelectedFile(null)
+      setFileNote('')
+      setLoadError('')
+    } catch (err) {
+      setLoadError(err.message)
+    }
   }
 
-  const deleteMaterial = (materialId) => {
+  const deleteMaterial = async (materialId) => {
     if (!confirm('Remove this material?')) return
-    setMaterials(prev => prev.filter(m => m.id !== materialId))
+    try {
+      await deleteProjectMaterial(id, materialId)
+      setMaterials(prev => prev.filter(m => m.id !== materialId))
+      setLoadError('')
+    } catch (err) {
+      setLoadError(err.message)
+    }
   }
 
   const sendMessage = () => {
-    if (!msg.trim() || !socket) return
+    if (!msg.trim() || !socketRef.current) return
     
-    socket.emit('send-message', {
+    socketRef.current.emit('send-message', {
       projectId: id,
       text: msg,
       username: username
@@ -199,7 +257,8 @@ function ProjectDetail(){
         <div className="detail-shell">
           <div className="detail-header">
             <h2>Project collaboration</h2>
-            <p>Share materials, keep project details in one place, and chat with collaborators as you build the project.</p>
+            <p>{project?.title || 'Shared project'} · {socketStatus} · {onlineUsers.length} online</p>
+            {loadError && <p>Backend issue: {loadError}</p>}
           </div>
 
           <div className="detail-grid">
@@ -260,7 +319,17 @@ function ProjectDetail(){
               <div style={{flex:1}}>
                 <div className="project-card" style={{padding:'24px', minHeight:'460px'}}>
                   <h3 style={{margin:'0 0 12px'}}>Project overview</h3>
-                  <p style={{margin:0, color:'#c8d2ff', lineHeight:1.8}}>Use this center panel as your project hub. Add actionable cards for milestones, deadlines, shared docs, or meeting notes.</p>
+                  <p style={{margin:0, color:'#c8d2ff', lineHeight:1.8}}>
+                    {project?.description || 'Use this center panel as your project hub. Add materials and chat with collaborators in real time.'}
+                  </p>
+                  <div className="presence-list">
+                    <strong>Online collaborators</strong>
+                    {onlineUsers.length === 0 ? (
+                      <span>No live collaborators yet.</span>
+                    ) : (
+                      onlineUsers.map((user, index) => <span key={`${user}-${index}`}>{user}</span>)
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -312,7 +381,7 @@ function ProjectDetail(){
                   className="app-input" 
                   value={msg} 
                   onChange={e => setMsg(e.target.value)} 
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   placeholder="Type a message..." 
                 />
                 <button className="app-button" onClick={sendMessage}>Send</button>

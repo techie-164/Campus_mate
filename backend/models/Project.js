@@ -12,7 +12,10 @@ const projectSchema = new mongoose.Schema(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+    },
+    ownerName: {
+      type: String,
+      default: 'Anonymous',
     },
     collaborators: [
       {
@@ -24,6 +27,30 @@ const projectSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task',
+      },
+    ],
+    materials: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        desc: {
+          type: String,
+          default: '',
+        },
+        fileName: String,
+        fileType: String,
+        fileSize: Number,
+        fileData: String,
+        createdBy: {
+          type: String,
+          default: 'Anonymous',
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     status: {

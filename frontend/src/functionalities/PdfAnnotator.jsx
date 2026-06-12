@@ -17,7 +17,6 @@ function PdfAnnotator() {
   const [brushColor, setBrushColor] = useState('#ff4d4d')
   const [brushSize, setBrushSize] = useState(4)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [lastPoint, setLastPoint] = useState(null)
   const [pdfBytes, setPdfBytes] = useState(null)
   const canvasRef = useRef(null)
 
@@ -126,7 +125,6 @@ function PdfAnnotator() {
     const point = getPointerPosition(event)
     if (!point) return
     setIsDrawing(true)
-    setLastPoint(point)
     const ctx = canvasRef.current.getContext('2d')
     ctx.beginPath()
     ctx.moveTo(point.x, point.y)
@@ -143,13 +141,11 @@ function PdfAnnotator() {
     ctx.lineJoin = 'round'
     ctx.lineTo(point.x, point.y)
     ctx.stroke()
-    setLastPoint(point)
   }
 
   const handlePointerUp = () => {
     if (!loaded) return
     setIsDrawing(false)
-    setLastPoint(null)
   }
 
   const clearAnnotations = () => {

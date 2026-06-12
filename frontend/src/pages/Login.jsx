@@ -1,12 +1,9 @@
 import React from 'react'
 import './login.css'
 import backgroundImage from '../assets/bg.png'
-import { useNavigate } from 'react-router-dom'
 import { Link } from "react-router-dom";
 
 function Login() {
-    const navigate = useNavigate()
-    
     return (
         <div className='login-container'
         style = {{

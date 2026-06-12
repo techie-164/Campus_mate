@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import backgroundImage from '../assets/bg.png'
 import { useNavigate } from 'react-router-dom'
+import { io } from 'socket.io-client'
 import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
+import { createProject, deleteProject, getProject, getProjects, SOCKET_SERVER_URL } from '../lib/api'
 import '../App.css'
 import './projects.css'
 
@@ -12,40 +14,91 @@ function Projects(){
   const [projects, setProjects] = useState([])
   const [newTitle, setNewTitle] = useState('')
   const [joinId, setJoinId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [username] = useState(() => localStorage.getItem('username') || `User${Math.floor(Math.random() * 1000)}`)
 
   useEffect(()=>{
-    const stored = JSON.parse(localStorage.getItem('projects') || '[]')
-    setProjects(stored)
+    let ignore = false
+
+    getProjects()
+      .then(data => {
+        if (!ignore) {
+          setProjects(data)
+          setError('')
+        }
+      })
+      .catch(err => {
+        if (!ignore) setError(err.message)
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
   },[])
 
-  useEffect(()=>{
-    localStorage.setItem('projects', JSON.stringify(projects))
-  },[projects])
+  useEffect(() => {
+    localStorage.setItem('username', username)
 
-  const createProject = () =>{
+    const socket = io(SOCKET_SERVER_URL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    })
+
+    socket.on('project-created', project => {
+      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
+    })
+
+    socket.on('project-updated', project => {
+      setProjects(prev => {
+        const exists = prev.some(item => item.id === project.id)
+        return exists ? prev.map(item => item.id === project.id ? project : item) : [project, ...prev]
+      })
+    })
+
+    socket.on('project-deleted', ({ id }) => {
+      setProjects(prev => prev.filter(project => project.id !== id))
+    })
+
+    return () => socket.disconnect()
+  }, [username])
+
+  const createNewProject = async () =>{
     if(!newTitle.trim()) return
-    const id = String(Date.now())
-    const p = { id, title: newTitle }
-    setProjects(prev => [p, ...prev])
-    setNewTitle('')
+    try {
+      const project = await createProject({ title: newTitle, ownerName: username })
+      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
+      setNewTitle('')
+      setError('')
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
-  const deleteProject = (projectId) => {
-    if(!confirm('Delete project and its local data?')) return
-    setProjects(prev => prev.filter(p => p.id !== projectId))
-    // cleanup per-project localStorage entries
-    try { localStorage.removeItem(`materials_${projectId}`) } catch(e){}
-    try { localStorage.removeItem(`chat_${projectId}`) } catch(e){}
+  const removeProject = async (projectId) => {
+    if(!confirm('Delete project and its chat/materials?')) return
+    try {
+      await deleteProject(projectId)
+      setProjects(prev => prev.filter(p => p.id !== projectId))
+      setError('')
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
-  const requestJoin = () =>{
+  const requestJoin = async () =>{
     if(!joinId.trim()) return alert('Enter project id')
-    // naive: if project exists, navigate
-    const found = projects.find(p=>p.id===joinId)
-    if(found){
-      navigate(`/projects/${joinId}`)
-    } else {
-      alert('Project not found in your list. This demo stores projects locally.')
+    try {
+      const project = await getProject(joinId.trim())
+      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
+      navigate(`/projects/${project.id}`)
+    } catch (err) {
+      setError(err.message)
+      alert('Project not found on the backend.')
     }
   }
 
@@ -84,7 +137,7 @@ function Projects(){
               <h3>Create new project</h3>
               <div className="controls-row">
                 <input className="app-input" placeholder="New project title" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
-                <button className="app-button" onClick={createProject}>Create</button>
+                <button className="app-button" onClick={createNewProject}>Create</button>
               </div>
             </div>
 
@@ -100,15 +153,18 @@ function Projects(){
           <div className="project-panel">
             <h3 style={{ marginTop: 0 }}>Your Projects</h3>
             <div className="project-card-list">
-              {projects.length===0 && <div className="empty-state">No projects yet. Create one to get started and it will appear here.</div>}
+              {error && <div className="empty-state">Backend issue: {error}</div>}
+              {loading && <div className="empty-state">Loading projects...</div>}
+              {!loading && projects.length===0 && <div className="empty-state">No projects yet. Create one to get started and it will appear here.</div>}
               {projects.map(p=> (
                 <div key={p.id} className="project-card">
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
                     <div style={{cursor:'pointer'}} onClick={()=>navigate(`/projects/${p.id}`)}>
                       <h4 className="project-card-title">{p.title}</h4>
                       <p className="project-card-subtitle">Project ID: {p.id}</p>
+                      {p.ownerName && <p className="project-card-subtitle">Created by {p.ownerName}</p>}
                     </div>
-                    <button className="ghost-button" onClick={() => deleteProject(p.id)}>Delete</button>
+                    <button className="ghost-button" onClick={() => removeProject(p.id)}>Delete</button>
                   </div>
                 </div>
               ))}

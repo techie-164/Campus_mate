@@ -134,6 +134,27 @@
   align-self: end;
 }
 
+.presence-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  color: #d8e1ff;
+}
+
+.presence-list strong {
+  color: #f7f8ff;
+}
+
+.presence-list span {
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1120px) {
   .detail-grid {
     grid-template-columns: 1fr;
