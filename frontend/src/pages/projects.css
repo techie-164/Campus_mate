@@ -1,10 +1,7 @@
 .project-page {
   min-height: 100vh;
-  background-image: linear-gradient(180deg, rgba(8, 12, 40, 0.88), rgba(18, 24, 68, 0.86)), var(--bg-img);
-  background-size: cover;
-  background-position: center;
   color: white;
-  padding: 42px 32px 32px;
+  padding: 100px 32px 32px;
 }
 
 .project-page .page-inner {
@@ -18,6 +15,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
 }
 
 .page-subtitle {
@@ -25,6 +23,7 @@
   margin: 12px 0 28px;
   max-width: 680px;
   line-height: 1.6;
+  font-size: 0.98rem;
 }
 
 .project-controls {
@@ -45,6 +44,12 @@
 
 .project-panel {
   padding: 28px;
+}
+
+.project-panel h3 {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .controls-section {
@@ -79,6 +84,8 @@
 .project-card-title {
   margin: 0 0 6px;
   font-size: 1.05rem;
+  font-weight: 700;
+  color: #f7f8ff;
 }
 
 .project-card-subtitle {
@@ -98,5 +105,23 @@
 @media (max-width: 860px) {
   .project-controls {
     grid-template-columns: 1fr;
+  }
+
+  .project-page {
+    padding: 100px 20px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .project-page {
+    padding: 90px 16px 16px;
+  }
+
+  .project-panel {
+    padding: 20px;
+  }
+
+  .page-title {
+    font-size: 1.8rem;
   }
 }

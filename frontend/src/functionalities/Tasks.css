@@ -6,7 +6,7 @@
 
 .tasks-shell {
   max-width: 1120px;
-  margin: 110px auto 0;
+  margin: 100px auto 0;
   padding: 0 24px 40px;
   backdrop-filter: blur(18px);
   background: rgba(6, 8, 20, 0.65);
@@ -14,8 +14,9 @@
   border-radius: 28px;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 110px);
+  height: calc(100vh - 100px);
   overflow: hidden;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.25);
 }
 
 .tasks-body {
@@ -36,12 +37,14 @@
 .tasks-top h2 {
   margin: 0 0 8px;
   font-size: 2.2rem;
+  font-weight: 700;
 }
 
 .tasks-top p {
   margin: 0;
   color: rgba(255, 255, 255, 0.72);
   max-width: 620px;
+  font-size: 0.96rem;
 }
 
 .tasks-summary {
@@ -56,6 +59,12 @@
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.tasks-summary > div:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .tasks-summary span {
@@ -69,10 +78,12 @@
   display: block;
   font-size: 1.8rem;
   margin-bottom: 6px;
+  color: #f7f8ff;
 }
 
 .tasks-summary small {
   color: rgba(255, 255, 255, 0.62);
+  font-size: 0.9rem;
 }
 
 .task-form {
@@ -95,6 +106,7 @@
 .task-form label {
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .task-form input {
@@ -105,10 +117,14 @@
   border-radius: 14px;
   padding: 14px 16px;
   font-size: 0.97rem;
+  transition: all 0.2s ease;
 }
 
 .task-form input:focus {
-  outline: 1px solid rgba(128, 88, 255, 0.8);
+  outline: none;
+  border-color: rgba(116, 214, 255, 0.65);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 12px rgba(116, 214, 255, 0.2);
 }
 
 .task-form .btn {
@@ -128,6 +144,7 @@
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px dashed rgba(255, 255, 255, 0.16);
+  text-align: center;
 }
 
 .task-card {
@@ -138,6 +155,12 @@
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .task-card.complete {
@@ -155,6 +178,8 @@
 .task-card h3 {
   margin: 0;
   font-size: 1.2rem;
+  font-weight: 700;
+  color: #f7f8ff;
 }
 
 .task-meta {
@@ -182,6 +207,7 @@
   cursor: pointer;
   font-size: 0.95rem;
   padding: 12px 18px;
+  font-weight: 600;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
@@ -192,12 +218,32 @@
 .btn-primary {
   background: rgba(128, 88, 255, 0.94);
   color: white;
+  box-shadow: 0 4px 12px rgba(128, 88, 255, 0.2);
+}
+
+.btn-primary:hover {
+  background: rgba(140, 100, 255, 1);
+  box-shadow: 0 8px 20px rgba(128, 88, 255, 0.3);
 }
 
 .btn-secondary {
   background: rgba(255, 255, 255, 0.12);
   color: white;
 }
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.btn-danger {
+  background: rgba(255, 80, 80, 0.12);
+  color: #ff8888;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 80, 80, 0.2);
+}
+
 
 .btn-danger {
   background: rgba(255, 70, 90, 0.9);
