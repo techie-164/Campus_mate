@@ -1,155 +1,37 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { io } from 'socket.io-client'
+import React, { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import backgroundImage from '../assets/bg.png'
 import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
-import { addProjectMaterial, deleteProjectMaterial, getProject, SOCKET_SERVER_URL } from '../lib/api'
 import '../App.css'
 import './projectDetail.css'
 
 function ProjectDetail(){
   const { id } = useParams()
-  const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [project, setProject] = useState(null)
   const [materials, setMaterials] = useState([])
-  const [onlineUsers, setOnlineUsers] = useState([])
-  const [loadError, setLoadError] = useState('')
-  const [socketStatus, setSocketStatus] = useState('Connecting')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [messages, setMessages] = useState([])
   const [msg, setMsg] = useState('')
   const [fileNote, setFileNote] = useState('')
-  const [username, setUsername] = useState(() => {
-    const stored = localStorage.getItem('username')
-    return stored || `User${Math.floor(Math.random() * 1000)}`
-  })
-  const socketRef = useRef(null)
   const listRef = useRef(null)
-  const chatListRef = useRef(null)
 
-  useEffect(() => {
-    let ignore = false
+  useEffect(()=>{
+    const m = JSON.parse(localStorage.getItem(`materials_${id}`) || '[]')
+    setMaterials(m)
+    const c = JSON.parse(localStorage.getItem(`chat_${id}`) || '[]')
+    setMessages(c)
+  },[id])
 
-    getProject(id)
-      .then(data => {
-        if (!ignore) {
-          setProject(data)
-          setMaterials(data.materials || [])
-          setLoadError('')
-        }
-      })
-      .catch(err => {
-        if (!ignore) setLoadError(err.message)
-      })
+  useEffect(()=>{
+    localStorage.setItem(`materials_${id}`, JSON.stringify(materials))
+  },[materials,id])
 
-    return () => {
-      ignore = true
-    }
-  }, [id])
-
-  // Initialize Socket.io connection
-  useEffect(() => {
-    const newSocket = io(SOCKET_SERVER_URL, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
-    })
-
-    newSocket.on('connect', () => {
-      setSocketStatus('Live')
-      console.log('Connected to socket server')
-      newSocket.emit('join-project', id, username)
-      newSocket.emit('get-chat-history', id)
-    })
-
-    newSocket.on('disconnect', () => {
-      setSocketStatus('Offline')
-    })
-
-    newSocket.on('connect_error', () => {
-      setSocketStatus('Offline')
-    })
-
-    newSocket.on('chat-history', (history) => {
-      setMessages(history)
-      setTimeout(() => {
-        if (chatListRef.current) {
-          chatListRef.current.scrollTop = chatListRef.current.scrollHeight
-        }
-      }, 100)
-    })
-
-    newSocket.on('receive-message', (data) => {
-      setMessages(prev => [...prev, data])
-      setTimeout(() => {
-        if (chatListRef.current) {
-          chatListRef.current.scrollTop = chatListRef.current.scrollHeight
-        }
-      }, 50)
-    })
-
-    newSocket.on('user-joined', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        text: data.message,
-        username: 'System',
-        timestamp: new Date(),
-        isSystem: true
-      }])
-    })
-
-    newSocket.on('user-left', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        text: data.message,
-        username: 'System',
-        timestamp: new Date(),
-        isSystem: true
-      }])
-    })
-
-    newSocket.on('project-users', users => {
-      setOnlineUsers(users)
-    })
-
-    newSocket.on('material-added', ({ material }) => {
-      setMaterials(prev => prev.some(item => item.id === material.id) ? prev : [material, ...prev])
-    })
-
-    newSocket.on('material-deleted', ({ materialId }) => {
-      setMaterials(prev => prev.filter(material => material.id !== materialId))
-    })
-
-    newSocket.on('project-deleted', ({ id: deletedProjectId }) => {
-      if (deletedProjectId === id) {
-        alert('This project was deleted.')
-        navigate('/projects')
-      }
-    })
-
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error)
-    })
-
-    socketRef.current = newSocket
-
-    return () => {
-      if (newSocket) {
-        newSocket.emit('leave-project', id)
-        newSocket.disconnect()
-      }
-      socketRef.current = null
-    }
-  }, [id, navigate, username])
-
-  useEffect(() => {
-    localStorage.setItem('username', username)
-  }, [username])
+  useEffect(()=>{
+    localStorage.setItem(`chat_${id}`, JSON.stringify(messages))
+  },[messages,id])
 
   const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -158,8 +40,8 @@ function ProjectDetail(){
     reader.readAsDataURL(file)
   })
 
-  const addMaterial = async () => {
-    if (!title.trim() && !selectedFile) return
+  const addMaterial = async () =>{
+    if(!title.trim() && !selectedFile) return
 
     const materialTitle = title.trim() || (selectedFile ? selectedFile.name : '')
     let fileData = null
@@ -178,56 +60,33 @@ function ProjectDetail(){
     }
 
     const item = {
+      id: Date.now(),
       title: materialTitle,
       desc,
       fileName,
       fileType,
       fileSize,
-      fileData,
-      createdBy: username
+      fileData
     }
 
-    try {
-      const material = await addProjectMaterial(id, item)
-      setMaterials(prev => prev.some(existing => existing.id === material.id) ? prev : [material, ...prev])
-      setTitle('')
-      setDesc('')
-      setSelectedFile(null)
-      setFileNote('')
-      setLoadError('')
-    } catch (err) {
-      setLoadError(err.message)
-    }
+    setMaterials(prev=>[item, ...prev])
+    setTitle('')
+    setDesc('')
+    setSelectedFile(null)
+    setFileNote('')
   }
 
-  const deleteMaterial = async (materialId) => {
+  const deleteMaterial = (materialId) => {
     if (!confirm('Remove this material?')) return
-    try {
-      await deleteProjectMaterial(id, materialId)
-      setMaterials(prev => prev.filter(m => m.id !== materialId))
-      setLoadError('')
-    } catch (err) {
-      setLoadError(err.message)
-    }
+    setMaterials(prev => prev.filter(m => m.id !== materialId))
   }
 
-  const sendMessage = () => {
-    if (!msg.trim() || !socketRef.current) return
-    
-    socketRef.current.emit('send-message', {
-      projectId: id,
-      text: msg,
-      username: username
-    })
-    
+  const sendMessage = ()=>{
+    if(!msg.trim()) return
+    const m = { id: Date.now(), text: msg }
+    setMessages(prev=>[...prev, m])
     setMsg('')
-  }
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
-    }
+    setTimeout(()=>{ if(listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight }, 50)
   }
 
   return (
@@ -257,8 +116,7 @@ function ProjectDetail(){
         <div className="detail-shell">
           <div className="detail-header">
             <h2>Project collaboration</h2>
-            <p>{project?.title || 'Shared project'} · {socketStatus} · {onlineUsers.length} online</p>
-            {loadError && <p>Backend issue: {loadError}</p>}
+            <p>Share materials, keep project details in one place, and chat with collaborators as you build the project.</p>
           </div>
 
           <div className="detail-grid">
@@ -319,71 +177,22 @@ function ProjectDetail(){
               <div style={{flex:1}}>
                 <div className="project-card" style={{padding:'24px', minHeight:'460px'}}>
                   <h3 style={{margin:'0 0 12px'}}>Project overview</h3>
-                  <p style={{margin:0, color:'#c8d2ff', lineHeight:1.8}}>
-                    {project?.description || 'Use this center panel as your project hub. Add materials and chat with collaborators in real time.'}
-                  </p>
-                  <div className="presence-list">
-                    <strong>Online collaborators</strong>
-                    {onlineUsers.length === 0 ? (
-                      <span>No live collaborators yet.</span>
-                    ) : (
-                      onlineUsers.map((user, index) => <span key={`${user}-${index}`}>{user}</span>)
-                    )}
-                  </div>
+                  <p style={{margin:0, color:'#c8d2ff', lineHeight:1.8}}>Use this center panel as your project hub. Add actionable cards for milestones, deadlines, shared docs, or meeting notes.</p>
                 </div>
               </div>
             </section>
 
             <section className="panel">
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
-                <h3>Chat</h3>
-                <input 
-                  type="text" 
-                  value={username} 
-                  onChange={e => setUsername(e.target.value)}
-                  placeholder="Your name"
-                  style={{
-                    width: '140px',
-                    padding: '6px 12px',
-                    fontSize: '0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    color: 'white'
-                  }}
-                />
-              </div>
-              <div className="chat-list" ref={chatListRef}>
+              <h3>Chat</h3>
+              <div className="chat-list">
                 {messages.length === 0 && <div className="empty-state">No chat messages yet. Start the conversation with your team.</div>}
-                {messages.map(m => (
-                  <div 
-                    key={m._id || m.id} 
-                    className={`chat-message ${m.isSystem ? 'system-message' : ''}`}
-                    style={m.isSystem ? { textAlign: 'center', opacity: 0.7, fontSize: '0.9rem' } : {}}
-                  >
-                    {!m.isSystem && (
-                      <div style={{fontSize: '0.85rem', color: '#8dd3ff', marginBottom: '4px', fontWeight: 600}}>
-                        {m.username}
-                      </div>
-                    )}
-                    <div>{m.text}</div>
-                    {!m.isSystem && (
-                      <div style={{fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px'}}>
-                        {new Date(m.timestamp).toLocaleTimeString()}
-                      </div>
-                    )}
-                  </div>
+                {messages.map(m=> (
+                  <div key={m.id} className="chat-message">{m.text}</div>
                 ))}
               </div>
 
               <div className="chat-controls">
-                <input 
-                  className="app-input" 
-                  value={msg} 
-                  onChange={e => setMsg(e.target.value)} 
-                  onKeyDown={handleKeyPress}
-                  placeholder="Type a message..." 
-                />
+                <input className="app-input" value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type a message" />
                 <button className="app-button" onClick={sendMessage}>Send</button>
               </div>
             </section>
