@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { PDFDocument } from 'pdf-lib'
 import backgroundImage from '../assets/bg.png'
-import Topbar from '../Topbar'
+import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
 import '../App.css'
 import './PdfAnnotator.css'

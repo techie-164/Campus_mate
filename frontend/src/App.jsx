@@ -3,7 +3,7 @@ import backgroundImage from './assets/bg.png'
 import Sidebar from './components/Sidebar'
 import { useState } from 'react'
 import './App.css'
-import Topbar from './Topbar.jsx'
+import Topbar from './components/Topbar.jsx'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

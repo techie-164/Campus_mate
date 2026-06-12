@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import './Scribble.css';
 import '../App.css';
 import backgroundImage from '../assets/bg.png';
-import Topbar from '../Topbar';
+import Topbar from '../components/Topbar';
 import Sidebar from '../components/Sidebar';
 import List from '../components/List';
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import backgroundImage from '../assets/bg.png'
-import Topbar from '../Topbar'
+import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
 import '../App.css'
 import './Tasks.css'
