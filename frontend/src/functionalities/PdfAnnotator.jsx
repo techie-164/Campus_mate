@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { PDFDocument } from 'pdf-lib'
+import { useNavigate } from 'react-router-dom'
 import backgroundImage from '../assets/bg.png'
 import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
@@ -7,6 +8,7 @@ import '../App.css'
 import './PdfAnnotator.css'
 
 function PdfAnnotator() {
+  const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [pdfDataUrl, setPdfDataUrl] = useState('')
   const [fileName, setFileName] = useState('annotated.pdf')
@@ -214,7 +216,7 @@ function PdfAnnotator() {
             <p>Draw annotations and save the final PDF with your notes.</p>
           </div>
           <div className="annotator-actions">
-            <button className="btn btn-secondary" onClick={() => (window.location.href = '/scribble')}>Back to Files</button>
+            <button className="btn btn-secondary" onClick={() => navigate('/scribble')}>Back to Files</button>
             <button className="btn btn-primary" onClick={handleSave} disabled={!loaded}>Save Annotated PDF</button>
           </div>
         </div>

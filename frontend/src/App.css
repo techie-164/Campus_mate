@@ -1,41 +1,99 @@
 @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
 
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: white;
+    background: #04070f;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
 .toggle {
     position: fixed;
     top: 20px;
-
     z-index: 1100;
-
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 18px;
     width: 48px;
     height: 48px;
-
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.12);
     color: white;
     font-size: 1.2rem;
     line-height: 1;
-
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease, left 0.3s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .toggle:hover,
 .toggle:focus {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.22);
     transform: scale(1.03);
 }
 
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, calc(100vw - 32px));
+    height: 100vh;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: rgba(8, 10, 25, 0.78);
+    backdrop-filter: blur(18px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.35);
+    transform: translateX(-100%);
+    transition: transform 0.28s ease, opacity 0.28s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sidebar-header,
+.sidebar-title {
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-header {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sidebar-title {
+    gap: 12px;
+}
+
 .sidebar-badge {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     display: grid;
     place-items: center;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    font-size: 1.2rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    font-size: 1.1rem;
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;
 }
@@ -46,67 +104,6 @@
     transform: scale(1.03);
 }
 
-.toggle:hover,
-.toggle:focus {
-    background: rgba(255, 255, 255, 0.25);
-    transform: scale(1.03);
-}
-
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100vh;
-
-    background: rgba(8, 10, 25, 0.75);
-    backdrop-filter: blur(18px);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-
-    color: white;
-    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.35);
-    transform: translateX(-100%);
-    transition: transform 0.28s ease, opacity 0.28s ease;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 950;
-}
-
-.sidebar.open {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.sidebar-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.sidebar-badge {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-    font-size: 1.1rem;
-}
-
 .sidebar-label {
     display: block;
     font-size: 1.1rem;
@@ -114,48 +111,31 @@
 }
 
 .sidebar-divider {
-    margin-top: 6px;
     width: 36px;
     height: 2px;
-    background: rgba(180, 150, 255, 0.8);
+    margin-top: 6px;
     border-radius: 999px;
-}
-
-.sidebar-close {
-    width: 38px;
-    height: 38px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
-    border-radius: 50%;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-    transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.sidebar-close:hover {
-    background: rgba(255, 255, 255, 0.16);
-    transform: scale(1.05);
+    background: rgba(180, 150, 255, 0.8);
 }
 
 .sidebar-item {
+    width: 100%;
+    min-height: 62px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     gap: 14px;
-    width: 100%;
-    padding: 16px 18px;
-    border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.04);
     color: white;
-    font-size: 0.98rem;
     text-align: left;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.sidebar-item:hover {
+.sidebar-item:hover,
+.sidebar-item:focus {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.18);
     transform: translateX(2px);
@@ -164,142 +144,13 @@
 .sidebar-item-icon {
     width: 34px;
     height: 34px;
+    flex: 0 0 34px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(128, 88, 255, 0.16);
     color: #c8b6ff;
     font-size: 1rem;
-}
-
-body {
-    margin: 0;
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: white;
-    background: #04070f;
-}
-
-.app-input {
-    width: 100%;
-    min-height: 48px;
-    padding: 0 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.08);
-    color: #f7f8ff;
-    font-size: 0.98rem;
-    outline: none;
-    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
-}
-
-.app-input:focus {
-    border-color: rgba(116, 214, 255, 0.65);
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateY(-1px);
-}
-
-.app-button {
-    padding: 12px 26px;
-    border-radius: 16px;
-    border: none;
-    background: linear-gradient(135deg, rgba(128, 88, 255, 0.95), rgba(100, 70, 200, 0.9));
-    color: white;
-    font-size: 0.96rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 8px 20px rgba(128, 88, 255, 0.2);
-}
-
-.app-button:hover {
-    background: linear-gradient(135deg, rgba(140, 100, 255, 1), rgba(110, 80, 210, 1));
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(128, 88, 255, 0.3);
-}
-
-.app-button:active {
-    transform: translateY(0);
-}
-
-.ghost-button {
-    padding: 10px 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.04);
-    color: #d0d8ff;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.ghost-button:hover {
-    background: rgba(255, 50, 50, 0.12);
-    border-color: rgba(255, 100, 100, 0.3);
-    color: #ff8888;
-}
-
-.topbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 70px;
-    background: rgba(8, 10, 25, 0.82);
-    backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 32px;
-    z-index: 900;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.logo {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-    letter-spacing: 0.02em;
-}
-
-.profile-circle {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(128, 88, 255, 0.3), rgba(100, 180, 255, 0.2));
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #c8d2ff;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.profile-circle:hover {
-    background: linear-gradient(135deg, rgba(128, 88, 255, 0.4), rgba(100, 180, 255, 0.3));
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.app-button {
-    min-height: 48px;
-    padding: 0 18px;
-    border-radius: 16px;
-    border: none;
-    background: linear-gradient(135deg, #7b61ff, #4f80ff);
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 18px 48px rgba(65, 79, 255, 0.18);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.app-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 22px 55px rgba(65, 79, 255, 0.25);
 }
 
 .topbar {
@@ -307,40 +158,22 @@ body {
     top: 15px;
     left: 20px;
     right: 20px;
-
     height: 70px;
-
+    padding: 0 25px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-
-    padding: 0 25px;
     pointer-events: none;
     z-index: 900;
-}
-
-.ghost-button {
-    padding: 6px 10px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    color: #ffdcec;
-    border: 1px solid rgba(255,255,255,0.06);
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.ghost-button:hover {
-    background: rgba(255,255,255,0.08);
 }
 
 .logo {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-
     margin: 0;
     color: white;
-    font-family: 'Bangers', 'Impact', cursive;
+    font-family: 'Bangers', Impact, cursive;
     font-size: 42px;
     font-weight: 400;
     letter-spacing: 1.5px;
@@ -354,21 +187,109 @@ body {
 .profile-circle {
     width: 50px;
     height: 50px;
-
-    border-radius: 50%;
-
     display: flex;
-    justify-content: center;
     align-items: center;
-
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.2);
-
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
     color: white;
     font-size: 20px;
-    font-weight: bold;
-
+    font-weight: 700;
     cursor: pointer;
     pointer-events: auto;
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.profile-circle:hover,
+.profile-circle:focus {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+}
+
+.app-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f7f8ff;
+    font-size: 0.98rem;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.app-input:focus {
+    border-color: rgba(116, 214, 255, 0.65);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.app-button {
+    min-height: 48px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b61ff, #4f80ff);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 18px 48px rgba(65, 79, 255, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-button:hover,
+.app-button:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 22px 55px rgba(65, 79, 255, 0.25);
+}
+
+.app-button:active {
+    transform: translateY(0);
+}
+
+.ghost-button {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffdcec;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.ghost-button:hover,
+.ghost-button:focus {
+    background: rgba(255, 90, 90, 0.14);
+    border-color: rgba(255, 120, 120, 0.28);
+    color: #ffaaaa;
+}
+
+@media (max-width: 640px) {
+    .topbar {
+        height: 58px;
+        padding: 0 8px;
+    }
+
+    .logo {
+        font-size: 30px;
+        letter-spacing: 1px;
+    }
+
+    .profile-circle {
+        width: 42px;
+        height: 42px;
+        font-size: 17px;
+    }
+
+    .toggle {
+        top: 16px;
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+    }
 }
