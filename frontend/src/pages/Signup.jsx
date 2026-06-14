@@ -7,7 +7,7 @@ function Signup() {
 
     const handleSubmit = (event) => {
         event.preventDefault()
-        navigate('/home')
+        navigate('/Login')
     }
 
     return (

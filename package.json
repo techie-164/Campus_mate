@@ -4,17 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "cd frontend && vite",
-    "build": "cd frontend && vite build",
+    "dev": "vite --root frontend --config frontend/vite.config.js",
+    "build": "vite build --root frontend --config frontend/vite.config.js",
     "lint": "eslint .",
-    "preview": "cd frontend && vite preview"
+    "preview": "vite preview --root frontend --config frontend/vite.config.js"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.16.0",
-    "socket.io-client": "^4.8.3"
+    "react-router-dom": "^7.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
