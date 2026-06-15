@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --root frontend --config frontend/vite.config.js",
+    "dev": "vite frontend",
     "build": "vite build --root frontend --config frontend/vite.config.js",
     "lint": "eslint .",
     "preview": "vite preview --root frontend --config frontend/vite.config.js"
@@ -13,7 +13,8 @@
     "pdf-lib": "^1.17.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.16.0"
+    "react-router-dom": "^7.16.0",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
