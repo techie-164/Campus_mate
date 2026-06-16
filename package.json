@@ -10,8 +10,10 @@
     "preview": "vite preview --root frontend --config frontend/vite.config.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "jsonwebtoken": "^9.0.3",
     "ors": "^1.0.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.2.6",
