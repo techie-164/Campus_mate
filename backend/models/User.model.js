@@ -3,6 +3,18 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
     username : {
         type : String,
         required : true,
@@ -19,10 +31,9 @@ const userSchema = new mongoose.Schema({
     {timestamps : true}
 );
 
-userSchema.pre('save', async function(next) {
-    if(!this.isModified('password')) return next(); 
+userSchema.pre('save', async function() {
+    if(!this.isModified('password')) return; 
     this.password = await bcrypt.hash(this.password,10);
-    next(); 
 })
 
 userSchema.methods.comparePassword = async function(password){
@@ -32,6 +43,8 @@ userSchema.methods.comparePassword = async function(password){
 userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
+            _id: this._id,
+            email: this.email,
             username: this.username,
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -43,7 +56,7 @@ userSchema.methods.generateAccessToken = function(){
 userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
         {
-            username: this.username,
+            _id: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
         {

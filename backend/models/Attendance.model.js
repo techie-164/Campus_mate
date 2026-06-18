@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import {User} from './User.model.js';
 
 const attendanceschema = new mongoose.Schema({
     attendance_id : {

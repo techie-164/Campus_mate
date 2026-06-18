@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { User } from './User.model.js';
 
 const Eventsschema = new mongoose.Schema({
     id : {
@@ -21,6 +20,10 @@ const Eventsschema = new mongoose.Schema({
     target_date : {
         type : Date,
         required : true
+    },
+    complete : {
+        type : Boolean,
+        default : false
     }
    },
   {timestamps : true}

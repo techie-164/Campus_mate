@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { User } from './User.model.js';
 
 const ProjectSchema = new mongoose.Schema({
     project_id :{

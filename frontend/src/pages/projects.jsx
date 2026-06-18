@@ -1,104 +1,78 @@
 import { useState, useEffect } from 'react'
 import backgroundImage from '../assets/bg.png'
 import { useNavigate } from 'react-router-dom'
-import { io } from 'socket.io-client'
 import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
-import { createProject, deleteProject, getProject, getProjects, SOCKET_SERVER_URL } from '../lib/api'
+import { api } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import '../App.css'
 import './projects.css'
 
 function Projects(){
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [projects, setProjects] = useState([])
   const [newTitle, setNewTitle] = useState('')
+  const [newDesc, setNewDesc] = useState('')
   const [joinId, setJoinId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [username] = useState(() => localStorage.getItem('username') || `User${Math.floor(Math.random() * 1000)}`)
+
+  async function fetchProjects() {
+    try {
+        const { data } = await api.get('/projects')
+        if (data.success) {
+            setProjects(data.data)
+        }
+    } catch (err) {
+        setError(err.response?.data?.message || err.message)
+    } finally {
+        setLoading(false)
+    }
+  }
 
   useEffect(()=>{
-    let ignore = false
-
-    getProjects()
-      .then(data => {
-        if (!ignore) {
-          setProjects(data)
-          setError('')
-        }
-      })
-      .catch(err => {
-        if (!ignore) setError(err.message)
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false)
-      })
-
-    return () => {
-      ignore = true
-    }
+    fetchProjects()
   },[])
-
-  useEffect(() => {
-    localStorage.setItem('username', username)
-
-    const socket = io(SOCKET_SERVER_URL, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    })
-
-    socket.on('project-created', project => {
-      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
-    })
-
-    socket.on('project-updated', project => {
-      setProjects(prev => {
-        const exists = prev.some(item => item.id === project.id)
-        return exists ? prev.map(item => item.id === project.id ? project : item) : [project, ...prev]
-      })
-    })
-
-    socket.on('project-deleted', ({ id }) => {
-      setProjects(prev => prev.filter(project => project.id !== id))
-    })
-
-    return () => socket.disconnect()
-  }, [username])
 
   const createNewProject = async () =>{
     if(!newTitle.trim()) return
     try {
-      const project = await createProject({ title: newTitle, ownerName: username })
-      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
-      setNewTitle('')
-      setError('')
+      const { data } = await api.post('/projects', { project_name: newTitle, description: newDesc })
+      if (data.success) {
+        setProjects(prev => [data.data, ...prev])
+        setNewTitle('')
+        setNewDesc('')
+        setError('')
+      }
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.message || err.message)
     }
   }
 
   const removeProject = async (projectId) => {
     if(!confirm('Delete project and its chat/materials?')) return
     try {
-      await deleteProject(projectId)
-      setProjects(prev => prev.filter(p => p.id !== projectId))
+      await api.delete(`/projects/${projectId}`)
+      setProjects(prev => prev.filter(p => p.project_id !== projectId))
       setError('')
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.message || err.message)
     }
   }
 
   const requestJoin = async () =>{
     if(!joinId.trim()) return alert('Enter project id')
     try {
-      const project = await getProject(joinId.trim())
-      setProjects(prev => prev.some(item => item.id === project.id) ? prev : [project, ...prev])
-      navigate(`/projects/${project.id}`)
+      const { data } = await api.post('/projects/join', { project_id: joinId.trim() })
+      if (data.success) {
+          fetchProjects()
+          navigate(`/projects/${joinId.trim()}`)
+      }
     } catch (err) {
-      setError(err.message)
-      alert('Project not found on the backend.')
+      setError(err.response?.data?.message || 'Project not found or error joining.')
+      alert(err.response?.data?.message || 'Project not found on the backend.')
     }
   }
 
@@ -136,7 +110,8 @@ function Projects(){
             <div className="project-panel controls-section">
               <h3>Create new project</h3>
               <div className="controls-row">
-                <input className="app-input" placeholder="New project title" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
+                <input className="app-input" placeholder="Project Name" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
+                <input className="app-input" placeholder="Description" value={newDesc} onChange={e=>setNewDesc(e.target.value)} />
                 <button className="app-button" onClick={createNewProject}>Create</button>
               </div>
             </div>
@@ -153,18 +128,20 @@ function Projects(){
           <div className="project-panel">
             <h3 style={{ marginTop: 0 }}>Your Projects</h3>
             <div className="project-card-list">
-              {error && <div className="empty-state">Backend issue: {error}</div>}
+              {error && <div className="empty-state">Issue: {error}</div>}
               {loading && <div className="empty-state">Loading projects...</div>}
               {!loading && projects.length===0 && <div className="empty-state">No projects yet. Create one to get started and it will appear here.</div>}
               {projects.map(p=> (
-                <div key={p.id} className="project-card">
+                <div key={p._id} className="project-card">
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
-                    <div style={{cursor:'pointer'}} onClick={()=>navigate(`/projects/${p.id}`)}>
-                      <h4 className="project-card-title">{p.title}</h4>
-                      <p className="project-card-subtitle">Project ID: {p.id}</p>
-                      {p.ownerName && <p className="project-card-subtitle">Created by {p.ownerName}</p>}
+                    <div style={{cursor:'pointer'}} onClick={()=>navigate(`/projects/${p.project_id}`)}>
+                      <h4 className="project-card-title">{p.project_name}</h4>
+                      <p className="project-card-subtitle">Project ID: {p.project_id}</p>
+                      {p.owner_id && <p className="project-card-subtitle">Created by {p.owner_id.name}</p>}
                     </div>
-                    <button className="ghost-button" onClick={() => removeProject(p.id)}>Delete</button>
+                    {p.owner_id && (p.owner_id._id === user?._id || p.owner_id === user?._id) && (
+                      <button className="ghost-button" onClick={() => removeProject(p.project_id)}>Delete</button>
+                    )}
                   </div>
                 </div>
               ))}

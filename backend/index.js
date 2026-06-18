@@ -3,18 +3,21 @@ dotenv.config({
     path: './.env'
 });
 import connectDB from './db/index.js';
-import express from 'express';
-const app = express();
+import { app } from './app.js';
+import http from 'http';
+import { initializeSocket } from './utils/socket.js';
 
 console.log("Backend is running");
 
+const server = http.createServer(app);
+initializeSocket(server);
+
 connectDB()
 .then(() => {
-    app.listen(process.env.PORT || 5000, () =>{
-        console.log(`Server is running on port ${process.env.PORT}`);
+    server.listen(process.env.PORT || 5000, () =>{
+        console.log(`Server is running on port ${process.env.PORT || 5000}`);
     })
 })
 .catch((error) => {
-    console.log("Error whileconnecting to the database:", error);
+    console.log("Error while connecting to the database:", error);
 })
-

@@ -4,12 +4,7 @@ import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
 import '../App.css'
 import './Tasks.css'
-
-const STORAGE_KEY = 'campus_mate_tasks'
-
-function uid() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
+import { api } from '../lib/api'
 
 function formatDate(date) {
   const d = new Date(date)
@@ -25,27 +20,32 @@ function todayDateString() {
 
 function Tasks() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return []
-    try {
-      return JSON.parse(saved)
-    } catch (e) {
-      console.error(e)
-      return []
-    }
-  })
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const [title, setTitle] = useState('')
   const [targetDate, setTargetDate] = useState(todayDateString())
   const [targetTime, setTargetTime] = useState('12:00')
 
+  async function fetchTasks() {
+    try {
+        const { data } = await api.get('/events')
+        if (data.success) {
+            setTasks(data.data)
+        }
+    } catch (error) {
+        console.error("Failed to fetch tasks:", error)
+    } finally {
+        setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
-  }, [tasks])
+    fetchTasks()
+  }, [])
 
   const today = useMemo(() => todayDateString(), [])
-  const tasksToday = tasks.filter(task => task.createdDate === today)
+  const tasksToday = tasks.filter(task => formatDate(task.createdAt) === today)
   const totalToday = tasksToday.length
   const completedToday = tasksToday.filter(task => task.complete).length
   const percentToday = totalToday ? Math.round((completedToday / totalToday) * 100) : 0
@@ -54,37 +54,53 @@ function Tasks() {
 
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.complete === b.complete) {
-      if (a.targetDate === b.targetDate) return a.targetTime.localeCompare(b.targetTime)
-      return a.targetDate.localeCompare(b.targetDate)
+        const dateA = new Date(a.target_date).getTime()
+        const dateB = new Date(b.target_date).getTime()
+        return dateA - dateB
     }
     return a.complete ? 1 : -1
   })
 
-  function addTask(event) {
+  async function addTask(event) {
     event.preventDefault()
     if (!title.trim()) return
 
-    const newTask = {
-      id: uid(),
-      title: title.trim(),
-      createdDate: today,
-      targetDate,
-      targetTime,
-      complete: false,
+    try {
+        const { data } = await api.post('/events', { 
+            title: title.trim(), 
+            target_date: new Date(`${targetDate}T${targetTime}`)
+        })
+        
+        if (data.success) {
+            setTasks(prev => [data.data, ...prev])
+            setTitle('')
+            setTargetDate(today)
+            setTargetTime('12:00')
+        }
+    } catch (error) {
+        console.error("Failed to add task:", error)
+        alert("Failed to add task")
     }
-
-    setTasks(prev => [newTask, ...prev])
-    setTitle('')
-    setTargetDate(today)
-    setTargetTime('12:00')
   }
 
-  function removeTask(id) {
-    setTasks(prev => prev.filter(task => task.id !== id))
+  async function removeTask(id) {
+    try {
+        await api.delete(`/events/${id}`)
+        setTasks(prev => prev.filter(task => task.id !== id))
+    } catch (error) {
+        console.error("Failed to remove task:", error)
+    }
   }
 
-  function toggleComplete(id) {
-    setTasks(prev => prev.map(task => task.id === id ? { ...task, complete: !task.complete } : task))
+  async function toggleComplete(id, currentComplete) {
+    try {
+        const { data } = await api.patch(`/events/${id}`, { complete: !currentComplete })
+        if (data.success) {
+            setTasks(prev => prev.map(task => task.id === id ? data.data : task))
+        }
+    } catch (error) {
+        console.error("Failed to toggle task:", error)
+    }
   }
 
   return (
@@ -169,21 +185,28 @@ function Tasks() {
           </form>
 
           <div className="task-list">
-          {sortedTasks.length === 0 ? (
+          {loading ? (
+            <div className="task-empty">Loading tasks...</div>
+          ) : sortedTasks.length === 0 ? (
             <div className="task-empty">No tasks yet. Add one to get started.</div>
           ) : (
-            sortedTasks.map(task => (
+            sortedTasks.map(task => {
+              const d = new Date(task.target_date)
+              const tDate = formatDate(d)
+              const tTime = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+
+              return (
               <div key={task.id} className={`task-card ${task.complete ? 'complete' : ''}`}>
                 <div className="task-card-main">
                   <div>
                     <h3>{task.title}</h3>
                     <div className="task-meta">
-                      <span>Created: {task.createdDate}</span>
-                      <span>Due: {task.targetDate} at {task.targetTime}</span>
+                      <span>Created: {formatDate(task.createdAt)}</span>
+                      <span>Due: {tDate} at {tTime}</span>
                     </div>
                   </div>
                   <div className="task-actions">
-                    <button className="btn btn-secondary" type="button" onClick={() => toggleComplete(task.id)}>
+                    <button className="btn btn-secondary" type="button" onClick={() => toggleComplete(task.id, task.complete)}>
                       {task.complete ? 'Undo' : 'Done'}
                     </button>
                     <button className="btn btn-danger" type="button" onClick={() => removeTask(task.id)}>
@@ -192,7 +215,7 @@ function Tasks() {
                   </div>
                 </div>
               </div>
-            ))
+            )})
           )}
           </div>
         </div>

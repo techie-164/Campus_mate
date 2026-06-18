@@ -1,14 +1,25 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './Login.css'
 import backgroundImage from '../assets/bg.png'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
     const navigate = useNavigate()
+    const { login } = useAuth()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault()
-        navigate('/home')
+        setError('')
+        try {
+            await login(email, password)
+            navigate('/home')
+        } catch (err) {
+            setError(err.message || 'Login failed')
+        }
     }
 
     return (
@@ -25,15 +36,21 @@ function Login() {
             <form className='login-box' onSubmit={handleSubmit}>
                 <h1>Campus Mate</h1>
                 
+                {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+
                 <input
-                    type='text'
-                    placeholder='Username'
+                    type='email'
+                    placeholder='Email'
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                 />
                 
                 <input
                     type='password'
                     placeholder='Password'
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                 />
                 

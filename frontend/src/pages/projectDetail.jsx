@@ -5,89 +5,95 @@ import Topbar from '../components/Topbar'
 import Sidebar from '../components/Sidebar'
 import '../App.css'
 import './projectDetail.css'
+import { api, SOCKET_SERVER_URL } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
+import { io } from 'socket.io-client'
 
 function ProjectDetail(){
   const { id } = useParams()
+  const { user } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [materials, setMaterials] = useState([])
-  const [title, setTitle] = useState('')
-  const [desc, setDesc] = useState('')
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [project, setProject] = useState(null)
   const [messages, setMessages] = useState([])
   const [msg, setMsg] = useState('')
-  const [fileNote, setFileNote] = useState('')
   const listRef = useRef(null)
+  const socketRef = useRef(null)
 
-  useEffect(()=>{
-    const m = JSON.parse(localStorage.getItem(`materials_${id}`) || '[]')
-    setMaterials(m)
-    const c = JSON.parse(localStorage.getItem(`chat_${id}`) || '[]')
-    setMessages(c)
-  },[id])
+  const projectIdRef = useRef(null)
 
-  useEffect(()=>{
-    localStorage.setItem(`materials_${id}`, JSON.stringify(materials))
-  },[materials,id])
-
-  useEffect(()=>{
-    localStorage.setItem(`chat_${id}`, JSON.stringify(messages))
-  },[messages,id])
-
-  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-
-  const addMaterial = async () =>{
-    if(!title.trim() && !selectedFile) return
-
-    const materialTitle = title.trim() || (selectedFile ? selectedFile.name : '')
-    let fileData = null
-    let fileName = null
-    let fileType = null
-    let fileSize = null
-
-    if (selectedFile) {
-      fileName = selectedFile.name
-      fileType = selectedFile.type
-      fileSize = selectedFile.size
-
-      if (selectedFile.size <= 500000) {
-        fileData = await readFileAsDataUrl(selectedFile)
-      }
-    }
-
-    const item = {
-      id: Date.now(),
-      title: materialTitle,
-      desc,
-      fileName,
-      fileType,
-      fileSize,
-      fileData
-    }
-
-    setMaterials(prev=>[item, ...prev])
-    setTitle('')
-    setDesc('')
-    setSelectedFile(null)
-    setFileNote('')
-  }
-
-  const deleteMaterial = (materialId) => {
-    if (!confirm('Remove this material?')) return
-    setMaterials(prev => prev.filter(m => m.id !== materialId))
-  }
-
-  const sendMessage = ()=>{
-    if(!msg.trim()) return
-    const m = { id: Date.now(), text: msg }
-    setMessages(prev=>[...prev, m])
-    setMsg('')
+  function scrollToBottom() {
     setTimeout(()=>{ if(listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight }, 50)
   }
+
+  async function fetchProjectDetails() {
+    try {
+      const { data } = await api.get(`/projects/${id}`)
+      if (data.success) {
+        setProject(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching project:', error)
+    }
+  }
+
+  async function fetchMessages() {
+    try {
+      const { data } = await api.get(`/projects/${id}/chat`)
+      if (data.success) {
+        setMessages(data.data)
+        scrollToBottom()
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    }
+  }
+
+  async function sendMessage(){
+    if(!msg.trim()) return
+    try {
+      await api.post(`/projects/${id}/chat`, { text: msg })
+      setMsg('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+    }
+  }
+
+  useEffect(()=>{
+    fetchProjectDetails()
+    fetchMessages()
+
+    // Initialize Socket
+    socketRef.current = io(SOCKET_SERVER_URL, {
+      withCredentials: true
+    })
+
+    socketRef.current.on('connect', () => {
+      console.log('Connected to socket')
+      socketRef.current.emit('join-project', id)
+    })
+
+    socketRef.current.on('new-message', (newMessage) => {
+      // Ensure the message belongs to this project
+      if (newMessage.project_id === projectIdRef.current) {
+        setMessages(prev => [...prev, newMessage])
+        scrollToBottom()
+      }
+    })
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave-project', id)
+        socketRef.current.disconnect()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[id])
+
+  useEffect(() => {
+    if (project) {
+        projectIdRef.current = project._id
+    }
+  }, [project])
 
   return (
     <div
@@ -115,84 +121,58 @@ function ProjectDetail(){
       <div className="project-detail-page">
         <div className="detail-shell">
           <div className="detail-header">
-            <h2>Project collaboration</h2>
-            <p>Share materials, keep project details in one place, and chat with collaborators as you build the project.</p>
+            <h2>{project ? project.project_name : 'Loading Project...'}</h2>
+            <p>{project ? project.description : 'Project Details'}</p>
           </div>
 
           <div className="detail-grid">
             <section className="panel">
-              <h3>Materials</h3>
-              <div className="material-list" ref={listRef}>
-                {materials.length === 0 && <div className="empty-state">No materials yet. Add project files, links or notes to get started.</div>}
-                {materials.map(m=> (
-                  <article key={m.id} className="material-item">
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:12}}>
-                      <strong>{m.title}</strong>
-                      <button className="ghost-button" onClick={() => deleteMaterial(m.id)}>Remove</button>
-                    </div>
-                    <p>{m.desc || (m.fileName ? `Attached file: ${m.fileName}` : 'No description provided.')}</p>
-                    {m.fileName && (
-                      <p style={{ margin: '10px 0 0', fontSize: '0.92rem', color: '#b9c4ff' }}>
-                        File: {m.fileName} · {(m.fileSize / 1024).toFixed(1)} KB
-                        {m.fileData ? (
-                          <><br /><a href={m.fileData} download={m.fileName} style={{ color: '#9ddcff' }}>Download</a></>
-                        ) : (
-                          <span style={{ opacity: 0.8 }}><br />Preview unavailable for large file.</span>
-                        )}
-                      </p>
-                    )}
-                  </article>
-                ))}
-              </div>
-
-              <div className="material-form">
-                <input className="app-input" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} />
-                <input className="app-input" placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)} />
-                <label style={{ display: 'grid', gap: 8 }}>
-                  <span style={{ color: '#c8d2ff', fontSize: '0.94rem' }}>Attach file</span>
-                  <input
-                    type="file"
-                    className="app-input"
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      setSelectedFile(file || null)
-                      if (file) {
-                        setFileNote(`${file.name} selected`)
-                      } else {
-                        setFileNote('')
-                      }
-                    }}
-                  />
-                </label>
-                {fileNote && <div style={{ color: '#c8d2ff', fontSize: '0.95rem' }}>{fileNote}</div>}
-                <button className="app-button" onClick={addMaterial}>Add Material</button>
-              </div>
-            </section>
-
-            <section className="panel">
               <div className="detail-header">
                 <h2>Project ID: {id}</h2>
-                <p>This workspace shows the current project summary and gives you a place to wire next features like tasks, notes, or file previews.</p>
+                <p>Share this ID with others to let them join this project.</p>
               </div>
               <div style={{flex:1}}>
                 <div className="project-card" style={{padding:'24px', minHeight:'460px'}}>
-                  <h3 style={{margin:'0 0 12px'}}>Project overview</h3>
-                  <p style={{margin:0, color:'#c8d2ff', lineHeight:1.8}}>Use this center panel as your project hub. Add actionable cards for milestones, deadlines, shared docs, or meeting notes.</p>
+                  <h3 style={{margin:'0 0 12px'}}>Members</h3>
+                  {project && project.members && project.members.map(member => (
+                    <div key={member._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: '#4facfe', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '10px' }}>
+                            {member.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 'bold' }}>{member.name}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#ccc' }}>{member.email}</div>
+                        </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
 
-            <section className="panel">
-              <h3>Chat</h3>
-              <div className="chat-list">
+            <section className="panel" style={{ gridColumn: 'span 2' }}>
+              <h3>Team Chat</h3>
+              <div className="chat-list" ref={listRef}>
                 {messages.length === 0 && <div className="empty-state">No chat messages yet. Start the conversation with your team.</div>}
                 {messages.map(m=> (
-                  <div key={m.id} className="chat-message">{m.text}</div>
+                  <div key={m._id} className="chat-message" style={{ display: 'flex', flexDirection: 'column', alignItems: m.sender_id?._id === user?._id ? 'flex-end' : 'flex-start', marginBottom: '15px' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '4px' }}>{m.sender_id?.name || 'Unknown'}</div>
+                    <div style={{ 
+                        background: m.sender_id?._id === user?._id ? 'rgba(79, 172, 254, 0.8)' : 'rgba(255, 255, 255, 0.15)',
+                        padding: '10px 15px',
+                        borderRadius: '15px',
+                        borderBottomRightRadius: m.sender_id?._id === user?._id ? '5px' : '15px',
+                        borderBottomLeftRadius: m.sender_id?._id === user?._id ? '15px' : '5px',
+                        maxWidth: '80%',
+                        wordBreak: 'break-word'
+                    }}>
+                        {m.text}
+                    </div>
+                  </div>
                 ))}
               </div>
 
               <div className="chat-controls">
-                <input className="app-input" value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type a message" />
+                <input className="app-input" value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type a message" onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }} />
                 <button className="app-button" onClick={sendMessage}>Send</button>
               </div>
             </section>

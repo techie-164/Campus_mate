@@ -29,9 +29,9 @@ function Sidebar({isOpen, onClose}){
                 <span className="sidebar-item-icon">🤝</span>
                 Projects & Collaborations
             </button>
-            <button className="sidebar-item" type="button" onClick={() => goTo('/scribble')}>
-                <span className="sidebar-item-icon">📝</span>
-                Scribble Pad
+            <button className="sidebar-item" type="button" onClick={() => goTo('/ai-assistant')}>
+                <span className="sidebar-item-icon">🤖</span>
+                AI Assistant
             </button>
             <button className="sidebar-item" type="button" onClick={() => goTo('/attendance')}>
                 <span className="sidebar-item-icon">📋</span>

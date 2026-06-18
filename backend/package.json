@@ -16,8 +16,20 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.49",
+    "@langchain/openai": "^1.4.7",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.10.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.7.0"
+    "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.4.5",
+    "mongoose": "^9.7.0",
+    "multer": "^2.2.0",
+    "nodemon": "^3.1.14",
+    "socket.io": "^4.8.3",
+    "uuid": "^14.0.0"
   }
 }
