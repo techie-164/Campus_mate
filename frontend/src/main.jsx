@@ -8,11 +8,9 @@ import Projects from './pages/projects.jsx'
 import ProjectDetail from './pages/projectDetail.jsx'
 import './index.css'
 import './App.css'
-import PdfAnnotator from './functionalities/PdfAnnotator.jsx'
 import Attendance from './functionalities/Attendance.jsx'
 import Tasks from './functionalities/Tasks.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
-
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import AiAssistant from './pages/AiAssistant.jsx'
 
@@ -25,7 +23,6 @@ const router = createBrowserRouter(
       <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
       <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-      <Route path="/annotate" element={<ProtectedRoute><PdfAnnotator /></ProtectedRoute>} />
       <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/ai-assistant" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
     </Route>
